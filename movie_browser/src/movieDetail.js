@@ -6,6 +6,7 @@ import Header from './Components/header';
 import { apiKey } from './Configs/appConfig';
 import { Typography } from '@material-ui/core';
 import { withRouter } from "react-router";
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 const style = theme => ({
 root:{
@@ -22,6 +23,10 @@ cast:{
   overflow: 'hidden',
   textOverflow: 'ellipsis',
 },
+loader:{
+  textAlign: 'center',
+  marginTop: '80px',
+},
 flexBlock:{
   display:"flex",
   marginBottom:"10px",
@@ -36,57 +41,62 @@ class MovieDetail extends React.Component {
     super(props);
     this.state = {
         movie : null,
-        cast : null
+        cast : null,
+        loading: true
     }
 
   }
   componentDidMount(){
-    this.fetchMovieDetail(this.props.match.params);
-    this.fetchMovieCast(this.props.match.params);
+    this.fetchMovieDetail(this.props.match.params).then(data =>{
+      this.setState({movie : data[0], cast : data[1], loading : false});
+    });
   }
   fetchMovieDetail = ({ id }) =>{
     const url = new URL(`https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}`);
+    const urlCast = new URL(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${apiKey}`);
     const fetchCallOptions = {
       method: "GET",
       headers: {
         'Content-Type': 'application/json',
       },
     };
-    fetch(url , fetchCallOptions).then(res => res.json()).then(data =>{
-      console.log('Movie DATA',data);
-      this.setState({movie : data});
-
-    }).catch((error) => {
-      console.error('Error:', error);
-    });
-  }
-  fetchMovieCast= ({ id }) =>{
-    const url = new URL(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${apiKey}`);
-    const fetchCallOptions = {
-      method: "GET",
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-    fetch(url , fetchCallOptions).then(res => res.json()).then(data =>{
-      console.log('Movie DATA',data);
-      this.setState({cast : data.cast});
-
-    }).catch((error) => {
-      console.error('Error:', error);
-    });
+    let promiseArr = [];
+    promiseArr.push(
+      new Promise((resolve, reject) =>{
+        fetch(url , fetchCallOptions).then(res => res.json()).then(data =>{
+          resolve(data);
+    
+        }).catch((error) => {
+          console.error('Error:', error);
+          reject(error);
+        });
+      }));
+    promiseArr.push(
+      new Promise((resolve, reject) =>{
+        fetch(urlCast , fetchCallOptions).then(res => res.json()).then(data =>{
+          resolve(data.cast);
+    
+        }).catch((error) => {
+          console.error('Error:', error);
+          reject(error);
+        });
+      }));
+    return Promise.all(promiseArr);
   }
 
   render(){
     const { classes } = this.props;
+    const loader = this.state.loading ? <div className={classes.loader}><CircularProgress color="secondary" /></div>: null;
      return (
             <>
                 <Header title="Movie Detail" search={this.searchMovies} />
-                {this.state.movie &&  <Grid container className={classes.root} justify="center" spacing={0}>
-                  <Grid item xs={2}>
+                {loader}
+                {(this.state.movie && !this.state.loading) && 
+                <Grid container className={classes.root} justify="center" spacing={0}>
+                  <Grid item xs={12} sm={4} lg={2} md={3}>
                      <img src={`http://image.tmdb.org/t/p/w185/${this.state.movie.poster_path}`} alt='f' />
                   </Grid>
-                  <Grid item xs={10}>
+                  <Grid item xs={12} sm={8} lg={10} md={9}>
                     <div className={classes.flexBlock}>
                         <Typography className={classes.flex02} variant="h6" >
                           {this.state.movie.title}
