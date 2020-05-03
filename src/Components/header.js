@@ -2,7 +2,6 @@ import React from 'react';
 import { fade, withStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import IconButton from '@material-ui/core/IconButton';
 import InputBase from '@material-ui/core/InputBase';
 import HomeIcon from '@material-ui/icons/Home';
 import SearchIcon from '@material-ui/icons/Search';
@@ -75,7 +74,15 @@ class Header extends React.Component {
     };
   }
   handleSearch = event =>{
-    this.setState({searchText : event.target.value},this.props.search(event.target.value));
+    this.setState({searchText : event.target.value},this.handleCallBack(event.target.value));
+  }
+  handleCallBack = value =>{
+    if(value !== ""){
+      this.props.search(value);
+    }
+    else{
+      this.props.fetchAll();
+    }
   }
   render(){
     const { classes } = this.props;
