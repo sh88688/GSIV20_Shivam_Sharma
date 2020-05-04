@@ -24,10 +24,8 @@ loader:{
 },
 });
 
-function fetchMovies(){
-  
+function fetchMovies(){ 
   return dispatch => {
-    console.log('FETC => ',dispatch);
   const url = new URL(`https://api.themoviedb.org/3/list/1?api_key=${apiKey}`);
   const fetchCallOptions = {
   method: "GET",
@@ -36,7 +34,6 @@ function fetchMovies(){
   },
   };
   fetch(url , fetchCallOptions).then(res => res.json()).then(data =>{
-    console.log('DATA',data);
     dispatch({type : 'MOVIE_LIST',movieList : data.items,loading : false});
   }).catch((error) => {
     console.error('Error:', error);
@@ -46,7 +43,6 @@ function fetchMovies(){
 }
 function  searchMovies(searchInput){
   return dispatch => {
-    console.log('SETC => ',dispatch);
       if(searchInput !== ""){
         const url = new URL(`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${searchInput}`);
         const fetchCallOptions = {
@@ -64,21 +60,14 @@ function  searchMovies(searchInput){
   }
 }
 class MovieList extends React.Component {
-  constructor(props){
-    super(props);
-    this.state ={
-      movieList : [],
-      loading : true
-    };
-  }
 
   componentDidMount(){
+    this.props.processingStart();
     this.props.fetchMovies();
   }
-
   render(){
     const { classes } = this.props;
-    const loader = this.props.loading ? <div className={classes.loader}><CircularProgress color="secondary" /></div>: null;
+    const loader = (this.props.loading) ? <div className={classes.loader}><CircularProgress color="secondary" /></div>: null;
     return (
             <>
                 <Header title="search" fetchAll={this.props.fetchMovies} search={this.props.searchMovies}  />
@@ -103,7 +92,6 @@ class MovieList extends React.Component {
  
 }
 const mapStateToProps = state => {
-  console.log('map state to prop ',state);
   return {
     loading: state.loading,
     movieList: state.movieList
@@ -113,7 +101,8 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => {
   return {
     fetchMovies : bindActionCreators(fetchMovies, dispatch),
-    searchMovies : bindActionCreators(searchMovies, dispatch)
+    searchMovies : bindActionCreators(searchMovies, dispatch),
+    processingStart : (e) => dispatch({type: 'PROCESSING_START', loading : true}),
   }
 }
 export default connect(mapStateToProps,mapDispatchToProps)(withStyles(style)(MovieList));
